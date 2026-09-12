@@ -68,6 +68,12 @@ export interface WasteBatch {
   status: BatchStatus;
   facilityId?: string;
   facilityName?: string;
+  actualQuantityTonnes?: number;
+  actualMoisturePercent?: number;
+  conversionOutputTonnes?: number;
+  outputType?: string;
+  processingProgressPercent?: number;
+  etaMinutes?: number;
   routeId?: string;
   carbonCalculationId?: string;
   createdAt: string;

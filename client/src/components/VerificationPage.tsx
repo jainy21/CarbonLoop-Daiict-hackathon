@@ -63,9 +63,9 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({
               conversionPathway: 'Biochar',
               transportDistanceKm: 26.4,
               avoidedLandfillTonnesCO2e: 2.8,
-              conversionBenefitTonnesCO2e: 5.8,
+              conversionBenefitTonnesCO2e: 8.1,
               transportEmissionsKgCO2e: 6.2,
-              netCarbonImpactTonnesCO2e: 8.4,
+              netCarbonImpactTonnesCO2e: 10.9,
               issuedAt: new Date().toISOString(),
               status: 'VERIFIED',
               journeyTimeline: []
@@ -90,9 +90,9 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({
             conversionPathway: 'Biochar',
             transportDistanceKm: 26.4,
             avoidedLandfillTonnesCO2e: 2.8,
-            conversionBenefitTonnesCO2e: 5.8,
+            conversionBenefitTonnesCO2e: 8.1,
             transportEmissionsKgCO2e: 6.2,
-            netCarbonImpactTonnesCO2e: 8.4,
+            netCarbonImpactTonnesCO2e: 10.9,
             issuedAt: new Date().toISOString(),
             status: 'VERIFIED',
             journeyTimeline: []

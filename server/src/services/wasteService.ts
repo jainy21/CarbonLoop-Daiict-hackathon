@@ -134,9 +134,23 @@ class WasteService {
   public updateBatchStatus(
     id: string,
     status: BatchStatus,
-    metadata?: { actor?: string; location?: string; description?: string; facilityId?: string; facilityName?: string }
+    metadata?: {
+      actor?: string;
+      location?: string;
+      description?: string;
+      facilityId?: string;
+      facilityName?: string;
+      actualQuantityTonnes?: number;
+      actualMoisturePercent?: number;
+      conversionOutputTonnes?: number;
+      outputType?: string;
+      processingProgressPercent?: number;
+    }
   ): { batch: WasteBatch; event: BatchEvent } {
-    const batch = this.batches.get(id);
+    let batch = this.batches.get(id);
+    if (!batch) {
+      batch = this.getBatchById(id);
+    }
     if (!batch) {
       throw new Error(`Batch ${id} not found`);
     }
@@ -147,20 +161,36 @@ class WasteService {
 
     if (metadata?.facilityId) batch.facilityId = metadata.facilityId;
     if (metadata?.facilityName) batch.facilityName = metadata.facilityName;
+    if (metadata?.actualQuantityTonnes !== undefined) {
+      batch.actualQuantityTonnes = Number(metadata.actualQuantityTonnes);
+      batch.quantityTonnes = Number(metadata.actualQuantityTonnes);
+    }
+    if (metadata?.actualMoisturePercent !== undefined) {
+      batch.actualMoisturePercent = Number(metadata.actualMoisturePercent);
+    }
+    if (metadata?.conversionOutputTonnes !== undefined) {
+      batch.conversionOutputTonnes = Number(metadata.conversionOutputTonnes);
+    }
+    if (metadata?.outputType) {
+      batch.outputType = metadata.outputType;
+    }
+    if (metadata?.processingProgressPercent !== undefined) {
+      batch.processingProgressPercent = Number(metadata.processingProgressPercent);
+    }
 
     const statusDescriptions: Record<BatchStatus, string> = {
       generated: 'Waste batch declared and verified at origin hub.',
       matched: `Smart Matching Engine identified optimal facility${batch.facilityName ? `: ${batch.facilityName}` : ''}.`,
       collection_scheduled: 'Logistics route optimized; carrier pickup scheduled.',
       in_transit: `Batch dispatched and currently in-transit to facility (${batch.origin.city} -> destination).`,
-      received: `Batch arrived at ${batch.facilityName || 'facility'} and weighbridge verification completed.`,
+      received: `Batch arrived at ${batch.facilityName || 'facility'} and weighbridge verification completed (${batch.actualQuantityTonnes || batch.quantityTonnes} tonnes).`,
       converting: `Active carbon conversion underway (${batch.preferredConversion} process).`,
-      converted: `Conversion complete. Carbon value sequestered and digital Carbon Passport generated.`,
+      converted: `Conversion complete. ${batch.conversionOutputTonnes || 2.6} tonnes ${batch.outputType || 'Biochar'} produced. Digital Carbon Passport generated.`,
     };
 
     const newEvent: BatchEvent = {
       id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      batchId: id,
+      batchId: batch.id,
       status,
       title: this.getStatusTitle(status),
       description: metadata?.description || statusDescriptions[status],
@@ -170,9 +200,9 @@ class WasteService {
       txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
     };
 
-    const currentTimeline = this.timelines.get(id) || [];
+    const currentTimeline = this.timelines.get(batch.id) || [];
     currentTimeline.push(newEvent);
-    this.timelines.set(id, currentTimeline);
+    this.timelines.set(batch.id, currentTimeline);
 
     return { batch, event: newEvent };
   }

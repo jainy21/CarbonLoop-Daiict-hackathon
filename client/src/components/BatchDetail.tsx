@@ -17,7 +17,8 @@ import {
   Play,
   RotateCcw,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Truck
 } from 'lucide-react';
 
 interface BatchDetailProps {
@@ -232,13 +233,86 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
           <div className="text-xl font-mono font-black text-emerald-300">
             {batch.estimatedCarbonImpactTonnesCO2e
               ? `+${batch.estimatedCarbonImpactTonnesCO2e.toFixed(1)} tCO₂e`
-              : '+8.4 tCO₂e (Est.)'}
+              : '+10.9 tCO₂e'}
           </div>
           <div className="text-[11px] text-emerald-400/80">
             Diverted from Landfill
           </div>
           <div className="text-[10px] text-slate-500">
             Carbon Passport Ready
+          </div>
+        </div>
+      </div>
+
+      {/* Active In-Transit Journey Tracking Banner (Spec Section 17) */}
+      <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-slate-900 via-cyan-950/20 to-slate-900 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                  Active Value-Chain Transit Tracker
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+                  {batch.status === 'in_transit' ? '🚛 IN TRANSIT' : batch.status.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {batch.origin.city} → {batch.facilityName || 'BioChar Plant A (Sanand)'} • 26.4 km Total Corridor
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className="text-[10px] uppercase text-slate-400 font-semibold block">Estimated Arrival</span>
+            <span className="text-sm font-mono font-bold text-cyan-300">ETA: 24 minutes</span>
+          </div>
+        </div>
+
+        {/* Live Progress Bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-300 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{batch.origin.city} APMC</span>
+            </span>
+            <span className="text-cyan-300 font-bold">18.7 / 26.4 km completed (70.8%)</span>
+            <span className="text-slate-300 flex items-center gap-1.5">
+              <span>Sanand GIDC</span>
+              <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+            </span>
+          </div>
+
+          <div className="w-full bg-slate-950 rounded-full h-3 p-0.5 border border-slate-800 relative overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-brand-500 via-cyan-400 to-emerald-400 transition-all duration-500 relative"
+              style={{ width: '70.8%' }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white animate-ping" />
+            </div>
+          </div>
+        </div>
+
+        {/* Dispatch & Transit Milestones */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px] font-sans border-t border-slate-800/80">
+          <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+            <span className="text-slate-500 font-mono block">09:30 AM</span>
+            <span className="text-emerald-400 font-semibold">✓ Pickup Confirmed</span>
+          </div>
+          <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+            <span className="text-slate-500 font-mono block">09:42 AM</span>
+            <span className="text-emerald-400 font-semibold">✓ Vehicle Departed</span>
+          </div>
+          <div className="p-2 rounded-lg bg-slate-950/60 border border-cyan-500/30">
+            <span className="text-cyan-400 font-mono block">10:05 AM</span>
+            <span className="text-cyan-300 font-bold">● En Route (Expressway)</span>
+          </div>
+          <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+            <span className="text-slate-500 font-mono block">10:29 AM</span>
+            <span className="text-slate-400">○ Expected Intake Check-in</span>
           </div>
         </div>
       </div>

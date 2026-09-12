@@ -84,11 +84,16 @@ function AppContent() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAskAIOpen, setIsAskAIOpen] = useState(false);
 
-  // Check URL for public passport verification link e.g. /passport/:id
+  // Check URL for public passport verification link e.g. /passport/:id or /verify/:id
   useEffect(() => {
     const path = window.location.pathname;
     if (path.startsWith('/passport/')) {
       const id = path.replace('/passport/', '');
+      if (id) {
+        setPublicVerificationBatchId(id);
+      }
+    } else if (path.startsWith('/verify/')) {
+      const id = path.replace('/verify/', '');
       if (id) {
         setPublicVerificationBatchId(id);
       }
@@ -160,10 +165,29 @@ function AppContent() {
   const handleBatchCreatedOrSelected = (batch: WasteBatch) => {
     setActiveBatch(batch);
     setDemoStage(2);
+    setActiveTab('smart-path');
   };
 
   const handleSelectFacilityForLogistics = (facility: Facility, _matchScore: any) => {
     setSelectedFacility(facility);
+    if (activeBatch) {
+      const updatedBatch: WasteBatch = {
+        ...activeBatch,
+        facilityId: facility.id,
+        facilityName: facility.name,
+        status: 'matched'
+      };
+      setActiveBatch(updatedBatch);
+      fetch(`/api/waste-batches/${activeBatch.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'matched',
+          facilityId: facility.id,
+          facilityName: facility.name
+        })
+      }).catch((err) => console.warn('Status update warning:', err));
+    }
     setDemoStage(3);
     setActiveTab('map-logistics');
   };
@@ -259,14 +283,17 @@ function AppContent() {
                 }}
               />
             ) : user.role === 'waste_generator' ? (
-              <OverviewView
-                onStartDemo={handleStartFlagshipDemo}
-                onNavigateToTab={(tab) => setActiveTab(tab)}
-                onSelectBatchForDetail={(b) => {
+              <GeneratorDashboardView
+                onNavigateToCreateBatch={() => {
+                  setActiveTab('waste-batches');
+                }}
+                onNavigateToSmartMatch={() => {
+                  setActiveTab('smart-path');
+                }}
+                onSelectBatch={(b) => {
                   setActiveBatch(b);
                   setActiveTab('waste-batches');
                 }}
-                onOpenAskAI={() => setIsAskAIOpen(true)}
               />
             ) : user.role === 'municipality' ? (
               <MunicipalityAnalyticsView />

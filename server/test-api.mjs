@@ -123,15 +123,16 @@ async function runTests() {
       origin: getRes.data.origin,
       preferredConversion: getRes.data.preferredConversion
     });
-    console.log(`   Top Recommended Plant: ${matchRes.data[0].facility.name}`);
-    console.log(`   Match Score: ${matchRes.data[0].matchScorePercent}% (Est. Net Carbon: +${matchRes.data[0].estimatedNetCarbonImpactTonnesCO2e} tCO2e)\n`);
+    const topCandidate = Array.isArray(matchRes.data) ? matchRes.data[0] : (matchRes.data?.candidates?.[0] || matchRes.data?.[0]);
+    console.log(`   Top Recommended Plant: ${topCandidate.facility.name}`);
+    console.log(`   Match Score: ${topCandidate.matchScorePercent}% (Est. Net Carbon: +${topCandidate.estimatedNetCarbonImpactTonnesCO2e} tCO2e)\n`);
 
     // 9. Test Developer 3 Consumption: Logistics Routing
     console.log('9. Testing POST /api/routes/optimize (Developer 3 handoff)');
     const routeRes = await makeRequest('POST', '/api/routes/optimize', {
       batchId,
       origin: getRes.data.origin,
-      destination: matchRes.data[0].facility.location
+      destination: topCandidate.facility.location
     });
     console.log(`   Route Distance: ${routeRes.data.distanceKm} km | Cost: INR ${routeRes.data.estimatedLogisticsCostINR} | Transport CO2: ${routeRes.data.transportEmissionsKgCO2e} kgCO2e\n`);
 

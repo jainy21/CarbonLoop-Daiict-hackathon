@@ -82,9 +82,10 @@ async function runAuthTests() {
 
     // 5. Test Register New User
     console.log('5. Test POST /api/auth/register (Create new user)');
+    const uniqueEmail = `priya.${Date.now()}@agrogujarat.in`;
     const regRes = await makeRequest('POST', '/api/auth/register', {
       name: 'Priya Sharma (FPO Lead)',
-      email: 'priya.sharma@agrogujarat.in',
+      email: uniqueEmail,
       password: 'StrongPassword123!',
       role: 'waste_generator',
       organization: 'Kheda District Agritech Cluster',

@@ -186,6 +186,59 @@ export const CarbonImpactView: React.FC<CarbonImpactViewProps> = ({
         <div className="space-y-6">
           <CarbonBreakdown calculation={calculation} />
 
+          {/* Generator Contribution Summary Block */}
+          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-brand-500/30 bg-gradient-to-r from-brand-950/30 via-slate-900 to-slate-950 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-400">
+                  Waste Producer Contribution
+                </span>
+                <h3 className="text-lg font-bold text-slate-100">
+                  Your Environmental & Carbon Value Creation
+                </h3>
+              </div>
+              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+                Verified Value Chain
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-lg">
+                  🌱
+                </div>
+                <div>
+                  <div className="text-base font-mono font-bold text-slate-100">{defaultQuantity} Tonnes</div>
+                  <div className="text-[11px] text-slate-400">Waste Diverted from Landfill</div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-lg">
+                  🌍
+                </div>
+                <div>
+                  <div className="text-base font-mono font-bold text-emerald-300">+{netImpactDisplay.toFixed(1)} tCO₂e</div>
+                  <div className="text-[11px] text-slate-400">Estimated Net Carbon Impact</div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center text-lg">
+                  ♻️
+                </div>
+                <div>
+                  <div className="text-base font-mono font-bold text-teal-300">100% Diverted</div>
+                  <div className="text-[11px] text-slate-400">Zero Landfill Methane Disposal</div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-brand-300 font-medium italic pt-1">
+              "Your waste was converted into a productive carbon-negative pathway."
+            </p>
+          </div>
+
           {/* Action to Issue Passport */}
           <div className="p-6 rounded-2xl glass-panel border border-brand-500/30 flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-0.5">
@@ -194,7 +247,7 @@ export const CarbonImpactView: React.FC<CarbonImpactViewProps> = ({
                 Ready to Issue Cryptographic Carbon Passport
               </h3>
               <p className="text-xs text-slate-400">
-                Generate immutable digital certificate with verifiable QR code for judges and supply chain partners.
+                Generate immutable digital certificate with verifiable QR code for buyers, auditors, and regulators.
               </p>
             </div>
 
@@ -203,7 +256,7 @@ export const CarbonImpactView: React.FC<CarbonImpactViewProps> = ({
               onClick={onNavigateToPassport}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-emerald-500 hover:from-brand-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-xl shadow-brand-500/20 cursor-pointer"
             >
-              <span>Issue Carbon Passport Certificate</span>
+              <span>Generate Carbon Passport & QR Code</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

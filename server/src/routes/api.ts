@@ -152,7 +152,19 @@ router.get('/waste-batches/:id', (req: Request, res: Response) => {
 router.patch('/waste-batches/:id/status', optionalAuthenticate, (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = getParam(req.params.id);
-    const { status, actor, location, description, facilityId, facilityName } = req.body;
+    const {
+      status,
+      actor,
+      location,
+      description,
+      facilityId,
+      facilityName,
+      actualQuantityTonnes,
+      actualMoisturePercent,
+      conversionOutputTonnes,
+      outputType,
+      processingProgressPercent
+    } = req.body;
     const validStatuses: BatchStatus[] = [
       'generated',
       'matched',
@@ -176,8 +188,22 @@ router.patch('/waste-batches/:id/status', optionalAuthenticate, (req: Authentica
       location,
       description,
       facilityId,
-      facilityName
+      facilityName,
+      actualQuantityTonnes,
+      actualMoisturePercent,
+      conversionOutputTonnes,
+      outputType,
+      processingProgressPercent
     });
+
+    // Auto-generate / refresh passport when batch is marked converted
+    if (status === 'converted') {
+      try {
+        passportService.createPassport(result.batch);
+      } catch (passErr) {
+        console.warn('Auto passport generation notice:', passErr);
+      }
+    }
 
     return res.json(result);
   } catch (err: any) {
