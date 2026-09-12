@@ -60,7 +60,14 @@ class WasteService {
   }
 
   public getBatchById(id: string): WasteBatch | undefined {
-    return this.batches.get(id);
+    if (this.batches.has(id)) return this.batches.get(id);
+    const lower = id.toLowerCase();
+    for (const b of this.batches.values()) {
+      if (b.id.toLowerCase() === lower || b.trackingNumber.toLowerCase() === lower) {
+        return b;
+      }
+    }
+    return undefined;
   }
 
   public createBatch(input: {
@@ -171,7 +178,10 @@ class WasteService {
   }
 
   public getTimeline(batchId: string): BatchEvent[] {
-    return this.timelines.get(batchId) || [];
+    if (this.timelines.has(batchId)) return this.timelines.get(batchId)!;
+    const batch = this.getBatchById(batchId);
+    if (batch && this.timelines.has(batch.id)) return this.timelines.get(batch.id)!;
+    return [];
   }
 
   private getStatusTitle(status: BatchStatus): string {

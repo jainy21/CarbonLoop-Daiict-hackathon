@@ -17,16 +17,72 @@ import { AdminManagementView } from './views/AdminManagementView.js';
 import { FacilityOperatorDashboardView } from './views/FacilityOperatorDashboardView.js';
 import { GeneratorDashboardView } from './views/GeneratorDashboardView.js';
 import { PublicPassportVerification } from './views/PublicPassportVerification.js';
+import { AskCarbonLoopModal } from './components/AskCarbonLoopModal.js';
 import { WasteBatch, Facility, UserRole } from './types/index.js';
+
+// Centralized Flagship Demo Baseline
+const FLAGSHIP_DEMO_BATCH: WasteBatch = {
+  id: 'batch-ahmedabad-demo',
+  trackingNumber: 'WL-1024',
+  wasteType: 'Rice Husk',
+  category: 'Agricultural',
+  quantityTonnes: 10,
+  moistureContentPercent: 11,
+  generatorId: 'usr-generator-1',
+  generatorName: 'Gujarat Agro Producer Cooperative',
+  generatorType: 'Farmer',
+  origin: {
+    lat: 23.0225,
+    lng: 72.5714,
+    address: 'APMC Market Yard, Vasna Road',
+    city: 'Ahmedabad',
+    state: 'Gujarat'
+  },
+  preferredConversion: 'Biochar',
+  status: 'matched',
+  facilityId: 'fac-biochar-a',
+  facilityName: 'BioChar Plant A (Sanand Industrial Eco-Park)',
+  estimatedCarbonImpactTonnesCO2e: 8.4,
+  createdAt: '2026-09-12T08:30:00.000Z',
+  updatedAt: '2026-09-12T08:35:00.000Z'
+};
+
+const FLAGSHIP_DEMO_FACILITY: Facility = {
+  id: 'fac-biochar-a',
+  name: 'BioChar Plant A (Sanand Industrial Eco-Park)',
+  location: {
+    lat: 22.9858,
+    lng: 72.3812,
+    address: 'Plot 42-B, GIDC Sanand Phase II',
+    city: 'Sanand / Ahmedabad',
+    state: 'Gujarat'
+  },
+  conversionType: 'Biochar',
+  acceptedWasteTypes: ['Rice Husk', 'Agricultural Residue', 'Cotton Stalks', 'Groundnut Shells', 'Wheat Straw', 'Sawdust'],
+  totalCapacityTonnesPerDay: 80,
+  availableCapacityTonnesPerDay: 45,
+  monthlyCapacity: 2400,
+  currentUtilization: 44,
+  conversionEfficiencyPercent: 88,
+  conversionEfficiency: 0.88,
+  carbonBenefitFactorPerTonne: 0.92,
+  carbonRetentionFactor: 0.92,
+  operationalStatus: 'Active',
+  status: 'Active',
+  verifiedCompliance: true,
+  contactEmail: 'operations@sanandbiochar.in',
+  processingCostPerTonneINR: 180
+};
 
 function AppContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
-  const [activeBatch, setActiveBatch] = useState<WasteBatch | null>(null);
-  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [activeBatch, setActiveBatch] = useState<WasteBatch | null>(FLAGSHIP_DEMO_BATCH);
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(FLAGSHIP_DEMO_FACILITY);
   const [demoStage, setDemoStage] = useState<number>(1);
   const [publicVerificationBatchId, setPublicVerificationBatchId] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAskAIOpen, setIsAskAIOpen] = useState(false);
 
   // Check URL for public passport verification link e.g. /passport/:id
   useEffect(() => {
@@ -49,14 +105,23 @@ function AppContent() {
       } else if (user.role === 'admin') {
         setActiveTab('admin-users');
       } else {
-        setActiveTab('waste-batches');
+        setActiveTab('overview');
       }
     }
   }, [user?.role]);
 
-  const handleStartFlagshipDemo = () => {
-    setActiveTab('waste-batches');
+  const handleLoadDemoScenario = () => {
+    setActiveBatch(FLAGSHIP_DEMO_BATCH);
+    setSelectedFacility(FLAGSHIP_DEMO_FACILITY);
     setDemoStage(1);
+    setActiveTab('overview');
+  };
+
+  const handleStartFlagshipDemo = () => {
+    setActiveBatch(FLAGSHIP_DEMO_BATCH);
+    setSelectedFacility(FLAGSHIP_DEMO_FACILITY);
+    setDemoStage(1);
+    setActiveTab('waste-batches');
   };
 
   const handleSelectDemoStage = (stage: number) => {
@@ -86,6 +151,8 @@ function AppContent() {
   };
 
   const handleResetDemo = () => {
+    setActiveBatch(null);
+    setSelectedFacility(null);
     setDemoStage(1);
     setActiveTab('overview');
   };
@@ -131,7 +198,7 @@ function AppContent() {
   // 2. LOADING STATE
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#070e1b] text-slate-100 flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-[#070e1b] text-slate-100 flex flex-col items-center justify-center gap-3 font-sans">
         <div className="w-8 h-8 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-mono text-slate-400">Loading CarbonLoop ecosystem...</span>
       </div>
@@ -146,7 +213,7 @@ function AppContent() {
           if (role === 'facility_operator') setActiveTab('overview');
           else if (role === 'municipality') setActiveTab('municipality-analytics');
           else if (role === 'admin') setActiveTab('admin-users');
-          else setActiveTab('waste-batches');
+          else setActiveTab('overview');
         }}
       />
     );
@@ -159,6 +226,7 @@ function AppContent() {
       <DemoFlowBar
         currentStage={demoStage}
         onSelectStage={handleSelectDemoStage}
+        onLoadDemoScenario={handleLoadDemoScenario}
         onResetDemo={handleResetDemo}
       />
 
@@ -174,6 +242,7 @@ function AppContent() {
           if (tab === 'carbon-passports') setDemoStage(6);
         }}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenAskAI={() => setIsAskAIOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -190,13 +259,14 @@ function AppContent() {
                 }}
               />
             ) : user.role === 'waste_generator' ? (
-              <GeneratorDashboardView
-                onNavigateToCreateBatch={() => setActiveTab('waste-batches')}
-                onNavigateToSmartMatch={() => setActiveTab('smart-path')}
-                onSelectBatch={(b) => {
+              <OverviewView
+                onStartDemo={handleStartFlagshipDemo}
+                onNavigateToTab={(tab) => setActiveTab(tab)}
+                onSelectBatchForDetail={(b) => {
                   setActiveBatch(b);
                   setActiveTab('waste-batches');
                 }}
+                onOpenAskAI={() => setIsAskAIOpen(true)}
               />
             ) : user.role === 'municipality' ? (
               <MunicipalityAnalyticsView />
@@ -204,6 +274,11 @@ function AppContent() {
               <OverviewView
                 onStartDemo={handleStartFlagshipDemo}
                 onNavigateToTab={(tab) => setActiveTab(tab)}
+                onSelectBatchForDetail={(b) => {
+                  setActiveBatch(b);
+                  setActiveTab('waste-batches');
+                }}
+                onOpenAskAI={() => setIsAskAIOpen(true)}
               />
             )}
           </>
@@ -283,8 +358,14 @@ function AppContent() {
           if (role === 'facility_operator') setActiveTab('overview');
           else if (role === 'municipality') setActiveTab('municipality-analytics');
           else if (role === 'admin') setActiveTab('admin-users');
-          else setActiveTab('waste-batches');
+          else setActiveTab('overview');
         }}
+      />
+
+      {/* Ask CarbonLoop AI Assistant Modal */}
+      <AskCarbonLoopModal
+        isOpen={isAskAIOpen}
+        onClose={() => setIsAskAIOpen(false)}
       />
 
       {/* Footer */}

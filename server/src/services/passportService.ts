@@ -62,14 +62,24 @@ export class PassportService {
   }
 
   public getPassportByBatchId(batchId: string): CarbonPassport | undefined {
-    // If not existing yet, dynamically generate for the batch if batch exists
-    if (!this.passports.has(batchId)) {
-      const batch = wasteService.getBatchById(batchId);
-      if (batch) {
-        return this.createPassport(batch);
+    if (this.passports.has(batchId)) return this.passports.get(batchId);
+
+    // Lookup batch by id or trackingNumber
+    const batch = wasteService.getBatchById(batchId);
+    if (batch) {
+      if (this.passports.has(batch.id)) return this.passports.get(batch.id);
+      if (this.passports.has(batch.trackingNumber)) return this.passports.get(batch.trackingNumber);
+      return this.createPassport(batch);
+    }
+
+    // Case-insensitive search across existing passports
+    const lower = batchId.toLowerCase();
+    for (const [key, pass] of this.passports.entries()) {
+      if (key.toLowerCase() === lower || pass.batchId.toLowerCase() === lower || pass.passportNumber.toLowerCase() === lower) {
+        return pass;
       }
     }
-    return this.passports.get(batchId);
+    return undefined;
   }
 }
 

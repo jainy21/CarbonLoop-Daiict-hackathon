@@ -99,22 +99,97 @@ export interface RouteWaypoint {
   lat: number;
   lng: number;
   label?: string;
+  type?: 'origin' | 'destination' | 'junction' | 'waypoint';
 }
 
-export interface Route {
+export interface RouteCostBreakdown {
+  baseCost: number;
+  costPerKm: number;
+  distanceKm: number;
+  mileageCost: number;
+  loadingCost: number;
+  totalCostINR: number;
+}
+
+export interface RouteDetail {
+  id: string;
+  name: string;
+  corridorName: string;
+  isRecommended: boolean;
+  distanceKm: number;
+  durationMinutes: number;
+  estimatedCost: number;
+  estimatedLogisticsCostINR: number;
+  transportEmissionsKgCO2e: number;
+  transportEmissionsTonnesCO2e: number;
+  routeScore: number; // 0-100 (higher is better eco-efficiency)
+  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
+  waypoints: RouteWaypoint[];
+  polylineCoordinates: [number, number][]; // [lat, lng] array
+  costBreakdown: RouteCostBreakdown;
+  summary: string;
+  trafficStatus: 'Free-Flow' | 'Moderate' | 'Heavy';
+}
+
+export interface RouteComparison {
+  recommended: RouteDetail;
+  alternative: RouteDetail;
+  distanceDeltaKm: number;
+  timeDeltaMinutes: number;
+  costDeltaINR: number;
+  emissionsDeltaKgCO2e: number;
+  recommendationReason: string;
+}
+
+export interface RouteOptimizationResponse {
   id: string;
   batchId: string;
   origin: LocationCoordinates;
   destination: LocationCoordinates;
   distanceKm: number;
   durationMinutes: number;
+  estimatedCost: number;
   estimatedLogisticsCostINR: number;
   transportEmissionsKgCO2e: number;
-  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
+  routeGeometry: [number, number][]; // Standard GeoJSON coordinate order or Leaflet [lat, lng]
+  polylineCoordinates: [number, number][];
   waypoints: RouteWaypoint[];
-  polylineCoordinates: [number, number][]; // [lat, lng] array
+  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
+  routeScore: number;
+  recommendedRoute: RouteDetail;
+  alternativeRoute: RouteDetail;
+  comparison: RouteComparison;
+  provider: 'OSRM' | 'Mapbox' | 'DeterministicFallback';
   createdAt: string;
 }
+
+export interface Route extends RouteOptimizationResponse {}
+
+export interface GeocodingResult {
+  query: string;
+  address: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
+  confidence: number;
+  displayName: string;
+}
+
+export interface IRoutingProvider {
+  name: string;
+  getRoute(
+    origin: LocationCoordinates,
+    destination: LocationCoordinates,
+    options?: { vehicleType?: string; isAlternative?: boolean }
+  ): Promise<{
+    distanceKm: number;
+    durationMinutes: number;
+    polylineCoordinates: [number, number][];
+    corridorName: string;
+  }>;
+}
+
 
 export interface CarbonCalculation {
   id: string;

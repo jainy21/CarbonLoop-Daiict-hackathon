@@ -16,7 +16,8 @@ import {
   LogOut,
   ChevronDown,
   BarChart3,
-  Users
+  Users,
+  Bot
 } from 'lucide-react';
 
 export type NavTab = 
@@ -35,69 +36,36 @@ interface NavigationProps {
   onSelectTab: (tab: NavTab) => void;
   batchCount?: number;
   onOpenLoginModal: () => void;
+  onOpenAskAI?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
   batchCount = 4,
-  onOpenLoginModal
+  onOpenLoginModal,
+  onOpenAskAI
 }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Role-specific nav items configuration (Section 12)
-  const getNavItems = () => {
-    const role = user?.role || 'waste_generator';
+  // Standard CarbonLoop Navigation (Spec Section 9)
+  const navItems: { id: NavTab; label: string; icon: React.ElementType; badge?: number }[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'waste-batches', label: 'Waste Batches', icon: Package, badge: batchCount },
+    { id: 'facilities', label: 'Facilities', icon: Building2 },
+    { id: 'smart-path', label: 'Smart Carbon Path', icon: Sparkles },
+    { id: 'map-logistics', label: 'Map & Logistics', icon: Map },
+    { id: 'carbon-impact', label: 'Carbon Impact', icon: TrendingUp },
+    { id: 'carbon-passports', label: 'Carbon Passports', icon: QrCode },
+  ];
 
-    switch (role) {
-      case 'waste_generator':
-        return [
-          { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
-          { id: 'waste-batches' as NavTab, label: 'My Waste Batches', icon: Package, badge: batchCount },
-          { id: 'facilities' as NavTab, label: 'Facilities', icon: Building2 },
-          { id: 'smart-path' as NavTab, label: 'Smart Carbon Path', icon: Sparkles },
-          { id: 'map-logistics' as NavTab, label: 'Map & Logistics', icon: Map },
-          { id: 'carbon-impact' as NavTab, label: 'Carbon Impact', icon: TrendingUp },
-          { id: 'carbon-passports' as NavTab, label: 'Carbon Passports', icon: QrCode },
-        ];
-
-      case 'facility_operator':
-        return [
-          { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
-          { id: 'waste-batches' as NavTab, label: 'Incoming Waste', icon: Package, badge: batchCount },
-          { id: 'facilities' as NavTab, label: 'My Facility', icon: Building2 },
-          { id: 'map-logistics' as NavTab, label: 'Transit & Logistics', icon: Map },
-          { id: 'carbon-impact' as NavTab, label: 'Carbon Impact', icon: TrendingUp },
-          { id: 'carbon-passports' as NavTab, label: 'Carbon Passports', icon: QrCode },
-        ];
-
-      case 'municipality':
-        return [
-          { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
-          { id: 'waste-batches' as NavTab, label: 'Waste Network', icon: Package, badge: batchCount },
-          { id: 'facilities' as NavTab, label: 'Facilities', icon: Building2 },
-          { id: 'municipality-analytics' as NavTab, label: 'Regional Analytics', icon: BarChart3 },
-          { id: 'carbon-impact' as NavTab, label: 'Carbon Impact', icon: TrendingUp },
-          { id: 'carbon-passports' as NavTab, label: 'Carbon Passports', icon: QrCode },
-        ];
-
-      case 'admin':
-      default:
-        return [
-          { id: 'overview' as NavTab, label: 'Overview', icon: LayoutDashboard },
-          { id: 'admin-users' as NavTab, label: 'Users & Roles', icon: Users },
-          { id: 'waste-batches' as NavTab, label: 'Waste Batches', icon: Package, badge: batchCount },
-          { id: 'facilities' as NavTab, label: 'Facilities', icon: Building2 },
-          { id: 'smart-path' as NavTab, label: 'Smart Carbon Path', icon: Sparkles },
-          { id: 'municipality-analytics' as NavTab, label: 'City Analytics', icon: BarChart3 },
-          { id: 'carbon-impact' as NavTab, label: 'Carbon Impact', icon: TrendingUp },
-          { id: 'carbon-passports' as NavTab, label: 'Passports', icon: QrCode },
-        ];
-    }
-  };
-
-  const navItems = getNavItems();
+  // Additional role-specific items if user has specialized role
+  if (user?.role === 'municipality') {
+    navItems.splice(5, 0, { id: 'municipality-analytics', label: 'City Analytics', icon: BarChart3 });
+  } else if (user?.role === 'admin') {
+    navItems.splice(1, 0, { id: 'admin-users', label: 'Users & Roles', icon: Users });
+  }
 
   const roleBadgeStyles: Record<UserRole, string> = {
     waste_generator: 'bg-brand-500/15 text-brand-300 border-brand-500/30',
@@ -137,12 +105,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                 )}
               </div>
               <p className="text-[10px] text-slate-400 -mt-0.5 hidden sm:block">
-                Circular Carbon Ecosystem & Traceability
+                Circular Carbon Ecosystem Protocol
               </p>
             </div>
           </div>
 
-          {/* Navigation Bar */}
+          {/* Navigation Bar (Spec Section 9) */}
           <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -151,9 +119,9 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
-                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-slate-800 text-brand-300 border border-slate-700 shadow-sm'
+                      ? 'bg-slate-850 text-brand-300 border border-slate-700 shadow-sm font-bold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
                   }`}
                 >
@@ -172,14 +140,28 @@ export const Navigation: React.FC<NavigationProps> = ({
             })}
           </nav>
 
-          {/* User Auth Profile / Actions */}
-          <div className="relative flex items-center gap-2">
+          {/* Right Action: AI Assistant + User Profile */}
+          <div className="flex items-center gap-2">
+            {/* Ask CarbonLoop AI Button (Spec Section 11) */}
+            {onOpenAskAI && (
+              <button
+                type="button"
+                onClick={onOpenAskAI}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-brand-500/30 hover:border-brand-500/60 text-brand-300 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                title="Ask CarbonLoop AI Assistant"
+              >
+                <Bot className="w-3.5 h-3.5 text-brand-400" />
+                <span className="hidden sm:inline">Ask CarbonLoop</span>
+              </button>
+            )}
+
+            {/* Auth Profile */}
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs transition-colors cursor-pointer"
                 >
                   <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold text-[10px]">
                     {user.name.charAt(0)}
@@ -229,7 +211,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoginModal}
-                className="px-3.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -249,7 +231,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => onSelectTab(item.id)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium whitespace-nowrap ${
                   isActive
-                    ? 'bg-slate-800 text-brand-300 border border-slate-700'
+                    ? 'bg-slate-800 text-brand-300 border border-slate-700 font-bold'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >

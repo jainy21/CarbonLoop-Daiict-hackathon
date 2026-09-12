@@ -191,22 +191,72 @@ export interface RouteWaypoint {
   lat: number;
   lng: number;
   label?: string;
+  type?: 'origin' | 'destination' | 'junction' | 'waypoint';
 }
 
-export interface Route {
+export interface RouteCostBreakdown {
+  baseCost: number;
+  costPerKm: number;
+  distanceKm: number;
+  mileageCost: number;
+  loadingCost: number;
+  totalCostINR: number;
+}
+
+export interface RouteDetail {
+  id: string;
+  name: string;
+  corridorName: string;
+  isRecommended: boolean;
+  distanceKm: number;
+  durationMinutes: number;
+  estimatedCost: number;
+  estimatedLogisticsCostINR: number;
+  transportEmissionsKgCO2e: number;
+  transportEmissionsTonnesCO2e: number;
+  routeScore: number;
+  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
+  waypoints: RouteWaypoint[];
+  polylineCoordinates: [number, number][];
+  costBreakdown?: RouteCostBreakdown;
+  summary: string;
+  trafficStatus?: 'Free-Flow' | 'Moderate' | 'Heavy';
+}
+
+export interface RouteComparison {
+  recommended: RouteDetail;
+  alternative: RouteDetail;
+  distanceDeltaKm: number;
+  timeDeltaMinutes: number;
+  costDeltaINR: number;
+  emissionsDeltaKgCO2e: number;
+  recommendationReason: string;
+}
+
+export interface RouteOptimizationResponse {
   id: string;
   batchId: string;
   origin: LocationCoordinates;
   destination: LocationCoordinates;
   distanceKm: number;
   durationMinutes: number;
+  estimatedCost: number;
   estimatedLogisticsCostINR: number;
   transportEmissionsKgCO2e: number;
-  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
-  waypoints: RouteWaypoint[];
+  routeGeometry?: [number, number][];
   polylineCoordinates: [number, number][];
+  waypoints: RouteWaypoint[];
+  vehicleType: 'Electric Heavy Truck' | 'CNG Medium Carrier' | 'Diesel 10T Lorry';
+  routeScore?: number;
+  recommendedRoute?: RouteDetail;
+  alternativeRoute?: RouteDetail;
+  comparison?: RouteComparison;
+  provider?: 'OSRM' | 'Mapbox' | 'DeterministicFallback';
   createdAt: string;
 }
+
+export interface Route extends RouteOptimizationResponse {}
+
 
 export interface CarbonPassport {
   id: string;

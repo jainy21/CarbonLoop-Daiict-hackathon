@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { wasteService } from '../services/wasteService.js';
 import { matchingService } from '../services/matchingService.js';
 import { routingService } from '../services/routingService.js';
+import { geocodingService } from '../services/geocodingService.js';
 import { carbonService } from '../services/carbonService.js';
 import { passportService } from '../services/passportService.js';
 import { optionalAuthenticate, authenticate, authorize, AuthenticatedRequest } from '../middleware/auth.js';
@@ -273,29 +274,33 @@ router.post('/matching/recommend', (req: Request, res: Response) => {
 
 /**
  * POST /api/routes/optimize
+ * Optimizes route between waste generator and conversion facility
+ * Generates recommended vs alternative routes, distances, durations, costs, emissions, and geometry
  */
-router.post('/routes/optimize', (req: Request, res: Response) => {
+router.post('/routes/optimize', async (req: Request, res: Response) => {
   try {
-    const { batchId, origin, destination, vehicleType } = req.body;
+    const { batchId, origin, destination, vehicleType, weightTonnes } = req.body;
     if (!origin || !destination) {
       return res.status(400).json({ error: 'origin and destination are required' });
     }
 
-    const route = routingService.optimizeRoute({
+    const route = await routingService.optimizeRoute({
       batchId: batchId || 'temp-batch',
       origin,
       destination,
-      vehicleType
+      vehicleType,
+      weightTonnes: weightTonnes ? Number(weightTonnes) : undefined
     });
 
     return res.json(route);
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message || 'Route optimization failed' });
   }
 });
 
 /**
  * GET /api/routes/:id
+ * Retrieve previously generated route and comparison by ID or batchId
  */
 router.get('/routes/:id', (req: Request, res: Response) => {
   try {
@@ -309,6 +314,21 @@ router.get('/routes/:id', (req: Request, res: Response) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+/**
+ * GET /api/geocode/search
+ * Geocode query to Gujarat coordinates
+ */
+router.get('/geocode/search', (req: Request, res: Response) => {
+  try {
+    const query = (req.query.q as string) || '';
+    const result = geocodingService.geocode(query);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ==========================================
 // 4. CARBON ENGINE & PASSPORTS (Developer 2 & 4 Modules)
