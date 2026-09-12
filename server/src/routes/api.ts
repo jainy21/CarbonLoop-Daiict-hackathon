@@ -199,15 +199,21 @@ router.get('/batches/:id/timeline', (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 2. FACILITIES & MATCHING (Developer 2 Module API contract)
+// 2. FACILITIES & MATCHING (Developer 2 Module)
 // ==========================================
 
 /**
  * GET /api/facilities
+ * Retrieve conversion facilities with optional filtering
  */
-router.get('/facilities', (_req: Request, res: Response) => {
+router.get('/facilities', (req: Request, res: Response) => {
   try {
-    const facilities = matchingService.getFacilities();
+    const { conversionType, wasteType, search } = req.query;
+    const facilities = matchingService.getFacilities({
+      conversionType: conversionType as string,
+      wasteType: wasteType as string,
+      search: search as string
+    });
     return res.json(facilities);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -216,6 +222,7 @@ router.get('/facilities', (_req: Request, res: Response) => {
 
 /**
  * GET /api/facilities/:id
+ * Retrieve single conversion facility by ID
  */
 router.get('/facilities/:id', (req: Request, res: Response) => {
   try {
@@ -232,29 +239,36 @@ router.get('/facilities/:id', (req: Request, res: Response) => {
 
 /**
  * POST /api/matching/recommend
+ * Smart matching algorithm ranking facilities via explainable weighted scoring:
+ * (Compatibility 30% + Capacity 20% + Distance 15% + Efficiency 15% + Carbon Benefit 15% + Logistics Cost 5%)
  */
 router.post('/matching/recommend', (req: Request, res: Response) => {
   try {
-    const { wasteType, quantityTonnes, origin, preferredConversion } = req.body;
-    if (!wasteType || !origin) {
-      return res.status(400).json({ error: 'wasteType and origin are required for matching' });
+    const { batchId, wasteType, quantityTonnes, origin, preferredConversion } = req.body;
+
+    // Must provide either batchId OR (wasteType + origin)
+    if (!batchId && (!wasteType || !origin)) {
+      return res.status(400).json({
+        error: 'Either batchId (e.g. "WL-1024") or { wasteType, quantityTonnes, origin } is required for matching'
+      });
     }
 
-    const recommendations = matchingService.recommendFacilities({
+    const recommendations = matchingService.recommend({
+      batchId,
       wasteType,
-      quantityTonnes: Number(quantityTonnes) || 10,
+      quantityTonnes: quantityTonnes ? Number(quantityTonnes) : undefined,
       origin,
       preferredConversion
     });
 
     return res.json(recommendations);
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(400).json({ error: err.message || 'Matching evaluation failed' });
   }
 });
 
 // ==========================================
-// 3. LOGISTICS & ROUTING (Developer 3 Module API contract)
+// 3. LOGISTICS & ROUTING (Developer 3 Module)
 // ==========================================
 
 /**
@@ -297,25 +311,30 @@ router.get('/routes/:id', (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 4. CARBON ENGINE & PASSPORTS (Developer 4 Module API contract)
+// 4. CARBON ENGINE & PASSPORTS (Developer 2 & 4 Modules)
 // ==========================================
 
 /**
  * POST /api/carbon/calculate
+ * Carbon impact calculation model:
+ * (Avoided Landfill + Conversion Carbon Benefit - Transport Emissions = Net Carbon Impact)
  */
 router.post('/carbon/calculate', (req: Request, res: Response) => {
   try {
-    const { batchId, wasteType, quantityTonnes, distanceKm, conversionType } = req.body;
-    const calc = carbonService.calculateCarbonImpact({
-      batchId: batchId || 'temp-batch',
-      wasteType: wasteType || 'Rice Husk',
-      quantityTonnes: Number(quantityTonnes) || 10,
-      distanceKm: Number(distanceKm) || 26.4,
-      conversionType
+    const { batchId, wasteType, quantityTonnes, distanceKm, conversionType, vehicleType } = req.body;
+
+    const calc = carbonService.calculate({
+      batchId,
+      wasteType,
+      quantityTonnes: quantityTonnes ? Number(quantityTonnes) : undefined,
+      distanceKm: distanceKm ? Number(distanceKm) : undefined,
+      conversionType,
+      vehicleType
     });
+
     return res.json(calc);
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(400).json({ error: err.message || 'Carbon calculation failed' });
   }
 });
 
@@ -325,19 +344,7 @@ router.post('/carbon/calculate', (req: Request, res: Response) => {
 router.get('/carbon/:batchId', (req: Request, res: Response) => {
   try {
     const batchId = getParam(req.params.batchId);
-    let calc = carbonService.getCalculationByBatchId(batchId);
-    if (!calc) {
-      const batch = wasteService.getBatchById(batchId);
-      if (batch) {
-        calc = carbonService.calculateCarbonImpact({
-          batchId: batch.id,
-          wasteType: batch.wasteType,
-          quantityTonnes: batch.quantityTonnes,
-          distanceKm: 26.4,
-          conversionType: batch.preferredConversion
-        });
-      }
-    }
+    const calc = carbonService.getCalculationByBatchId(batchId);
     if (!calc) {
       return res.status(404).json({ error: `Carbon calculation for batch '${batchId}' not found` });
     }

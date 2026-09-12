@@ -9,6 +9,13 @@ dist/
 */dist/
 build/
 */build/
+out/
+.next/
+
+# Testing & Coverage
+coverage/
+*.lcov
+.nyc_output/
 
 # Environment variables
 .env
@@ -17,6 +24,7 @@ build/
 .env.test.local
 .env.production.local
 *.env
+*.env.*
 
 # Logs
 logs
@@ -36,6 +44,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.sublime-workspace
 
 # OS generated files
 .DS_Store
@@ -45,3 +54,10 @@ lerna-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Temporary & Cache
+.temp/
+.cache/
+.turbo/
+*.tsbuildinfo
+

@@ -103,16 +103,88 @@ export interface Facility {
   id: string;
   name: string;
   location: LocationCoordinates;
-  conversionType: string;
+  conversionType: 'Biochar' | 'Biogas' | 'Carbon-negative material' | string;
   acceptedWasteTypes: string[];
   totalCapacityTonnesPerDay: number;
   availableCapacityTonnesPerDay: number;
+  monthlyCapacity?: number;
+  currentUtilization?: number;
+  conversionEfficiency?: number;
   conversionEfficiencyPercent: number;
+  carbonRetentionFactor?: number;
   carbonBenefitFactorPerTonne: number;
   operationalStatus: 'Active' | 'High Demand' | 'Maintenance';
+  status?: 'Active' | 'High Demand' | 'Maintenance' | string;
   verifiedCompliance: boolean;
   contactEmail: string;
   processingCostPerTonneINR: number;
+}
+
+export interface FacilityComponentScores {
+  compatibility: number;
+  capacity: number;
+  distance: number;
+  efficiency: number;
+  carbonBenefit: number;
+  logisticsCost: number;
+}
+
+export interface FacilityMatchScore {
+  facility: Facility;
+  matchScore: number;
+  matchScorePercent: number;
+  isRecommended: boolean;
+  reasons: string[];
+  componentScores?: FacilityComponentScores;
+  breakdown: {
+    compatibilityScore: number;
+    capacityScore: number;
+    distanceScore: number;
+    efficiencyScore: number;
+    carbonBenefitScore: number;
+    logisticsCostScore: number;
+  };
+  estimatedDistanceKm: number;
+  estimatedLogisticsCostINR: number;
+  estimatedNetCarbonImpactTonnesCO2e: number;
+}
+
+export interface MatchingRecommendationResponse {
+  recommendedFacility: Facility;
+  matchScore: number;
+  reasons: string[];
+  componentScores: FacilityComponentScores;
+  candidates: FacilityMatchScore[];
+}
+
+export interface CarbonCalculation {
+  id: string;
+  batchId: string;
+  wasteType: string;
+  quantityTonnes: number;
+  wasteQuantityTonnes?: number;
+  avoidedLandfillEmissionsTonnesCO2e: number;
+  avoidedLandfillEmissions?: number;
+  conversionCarbonBenefitTonnesCO2e: number;
+  conversionCarbonBenefit?: number;
+  transportEmissionsTonnesCO2e: number;
+  transportEmissions?: number;
+  transportEmissionsKg: number;
+  netCarbonImpactTonnesCO2e: number;
+  netCarbonImpact?: number;
+  calculationMethodology: string;
+  methodologyVersion: string;
+  calculatedAt: string;
+  formulaBreakdown: {
+    landfillEmissionFactor: number;
+    conversionEfficiency: number;
+    carbonRetentionFactor: number;
+    vehicleEmissionFactor: number;
+    distanceKm: number;
+    baselineMethaneFactor: number;
+    conversionFactor: number;
+    transportFuelPenalty: number;
+  };
 }
 
 export interface RouteWaypoint {
@@ -158,3 +230,4 @@ export interface CarbonPassport {
   status: 'VERIFIED' | 'IN_TRANSIT' | 'PROCESSING';
   journeyTimeline: BatchEvent[];
 }
+

@@ -59,6 +59,7 @@ export interface WasteBatch {
   category: WasteCategory;
   quantityTonnes: number;
   moistureContentPercent?: number;
+  availableDate?: string;
   generatorId?: string;
   generatorName: string;
   generatorType: 'Farmer' | 'Food Processor' | 'Municipality' | 'Industrial Factory';
@@ -81,9 +82,14 @@ export interface Facility {
   acceptedWasteTypes: string[];
   totalCapacityTonnesPerDay: number;
   availableCapacityTonnesPerDay: number;
-  conversionEfficiencyPercent: number; // e.g. 78%
-  carbonBenefitFactorPerTonne: number; // tCO2e sequestered or avoided per tonne
+  monthlyCapacity?: number; // tonnes per month (e.g. 2400)
+  currentUtilization?: number; // percentage (e.g. 44%)
+  conversionEfficiencyPercent: number; // e.g. 88%
+  conversionEfficiency?: number; // 0.88
+  carbonBenefitFactorPerTonne: number; // e.g. 0.92
+  carbonRetentionFactor?: number; // e.g. 0.92
   operationalStatus: 'Active' | 'High Demand' | 'Maintenance';
+  status?: 'Active' | 'High Demand' | 'Maintenance';
   verifiedCompliance: boolean;
   contactEmail: string;
   processingCostPerTonneINR: number;
@@ -115,16 +121,28 @@ export interface CarbonCalculation {
   batchId: string;
   wasteType: string;
   quantityTonnes: number;
+  wasteQuantityTonnes?: number;
   avoidedLandfillEmissionsTonnesCO2e: number;
+  avoidedLandfillEmissions?: number;
   conversionCarbonBenefitTonnesCO2e: number;
+  conversionCarbonBenefit?: number;
   transportEmissionsTonnesCO2e: number;
+  transportEmissions?: number;
+  transportEmissionsKg?: number;
   netCarbonImpactTonnesCO2e: number;
+  netCarbonImpact?: number;
   calculationMethodology: string;
+  methodologyVersion?: string;
   calculatedAt: string;
   formulaBreakdown: {
-    baselineMethaneFactor: number;
-    conversionFactor: number;
-    transportFuelPenalty: number;
+    landfillEmissionFactor?: number;
+    conversionEfficiency?: number;
+    carbonRetentionFactor?: number;
+    vehicleEmissionFactor?: number;
+    distanceKm?: number;
+    baselineMethaneFactor?: number;
+    conversionFactor?: number;
+    transportFuelPenalty?: number;
   };
 }
 
@@ -165,7 +183,8 @@ export interface CarbonPassport {
 
 export interface FacilityMatchScore {
   facility: Facility;
-  matchScorePercent: number; // 0-100
+  matchScorePercent: number; // 0-100 (e.g. 92)
+  matchScore?: number; // 92
   isRecommended: boolean;
   breakdown: {
     compatibilityScore: number;
@@ -175,8 +194,69 @@ export interface FacilityMatchScore {
     carbonBenefitScore: number;
     logisticsCostScore: number;
   };
+  componentScores?: {
+    compatibility: number; // 0.0 - 1.0
+    capacity: number;
+    distance: number;
+    efficiency: number;
+    carbonBenefit: number;
+    logisticsCost: number;
+  };
   reasons: string[];
   estimatedDistanceKm: number;
   estimatedLogisticsCostINR: number;
   estimatedNetCarbonImpactTonnesCO2e: number;
+}
+
+export interface MatchingRecommendationResponse {
+  recommendedFacility: Facility;
+  matchScore: number;
+  reasons: string[];
+  componentScores: {
+    compatibility: number;
+    capacity: number;
+    distance: number;
+    efficiency: number;
+    carbonBenefit: number;
+    logisticsCost: number;
+  };
+  candidates: FacilityMatchScore[];
+}
+
+// Future AI Interface Contracts (Section 12)
+export interface IFacilityRecommendationEngine {
+  recommend(input: {
+    batchId?: string;
+    wasteType: string;
+    quantityTonnes: number;
+    origin: LocationCoordinates;
+    preferredConversion?: string;
+  }): Promise<MatchingRecommendationResponse> | MatchingRecommendationResponse;
+}
+
+export interface ICarbonPredictionEngine {
+  calculate(input: {
+    batchId: string;
+    wasteType: string;
+    quantityTonnes: number;
+    distanceKm: number;
+    conversionType?: string;
+  }): Promise<CarbonCalculation> | CarbonCalculation;
+}
+
+export interface IWasteClassifier {
+  classifyWaste(input: { description?: string; imageBase64?: string }): Promise<{
+    wasteType: string;
+    category: WasteCategory;
+    estimatedMoisture: number;
+    confidenceScore: number;
+  }>;
+}
+
+export interface IAnomalyDetectionEngine {
+  detectAnomalies(batch: WasteBatch, calculation?: CarbonCalculation): Promise<{
+    isAnomalous: boolean;
+    flags: string[];
+    riskScore: number;
+  }>;
 }
